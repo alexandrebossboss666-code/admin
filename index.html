@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -16,6 +17,8 @@
     --accent-dark:#e8a04f;
     --red:#F5BFBF;
     --red-text:#5c2b2b;
+    --purple:#D9BFF5;
+    --purple-text:#4a2b5c;
     --ink:#26261f;
   }
   *{ box-sizing:border-box; }
@@ -215,8 +218,103 @@
 
   @media (max-width:760px){
     .switch-box{ position:static; transform:none; margin:20px auto 0; }
+    .avis-panel{ position:static; transform:none; margin:0 auto 20px; }
     .bilan-panel{ margin:0 auto; }
     body{ flex-direction:column; padding:80px 0 40px; }
+  }
+
+  .avis-panel{
+    position:fixed;
+    top:50%;
+    left:36px;
+    transform:translateY(-50%);
+    border:2px solid #1c1c18;
+    border-radius:20px;
+    background:#ffffff;
+    width:190px;
+    max-height:70vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .avis-panel h2{
+    text-align:center;
+    font-size:1.05rem;
+    margin:0;
+    padding:16px 10px 12px;
+    border-bottom:2px solid #1c1c18;
+  }
+  .avis-list{
+    flex:1;
+    overflow-y:auto;
+    padding:14px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .avis-empty{
+    font-size:0.8rem;
+    color:#8a8a85;
+    text-align:center;
+    margin-top:20px;
+  }
+  .avis-item{
+    position:relative;
+    background:var(--purple);
+    border-radius:12px;
+    padding:14px 10px 10px;
+    text-align:center;
+    font-weight:700;
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--purple-text);
+    cursor:pointer;
+  }
+  .avis-item .trash{
+    position:absolute;
+    top:6px; left:8px;
+    cursor:pointer;
+    font-size:0.9rem;
+    line-height:1;
+  }
+
+  /* ---------- Overlay lecture d'un avis ---------- */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(20,20,18,0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+    padding:20px;
+  }
+  .overlay.show{ display:flex; }
+  .avis-sheet{
+    background:#fff;
+    width:100%;
+    max-width:420px;
+    max-height:80vh;
+    overflow-y:auto;
+    border-radius:18px;
+    padding:28px 26px;
+    position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+  }
+  .avis-sheet .close-x{
+    position:absolute;
+    top:14px; right:16px;
+    cursor:pointer;
+    font-size:1.1rem;
+    color:#666;
+  }
+  .avis-sheet h3{
+    text-align:center;
+    font-size:1.05rem;
+    margin:0 0 16px;
+  }
+  .avis-sheet p{
+    font-size:0.92rem;
+    line-height:1.5;
+    white-space:pre-wrap;
   }
 </style>
 </head>
@@ -253,6 +351,15 @@
       <h2>Bilan</h2>
       <div class="bilan-list" id="bilanList"></div>
     </aside>
+
+    <aside class="avis-panel">
+      <h2>Avis</h2>
+      <div class="avis-list" id="avisList"></div>
+    </aside>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="avis-sheet" id="avisSheet"></div>
   </div>
 
 <script>
@@ -263,6 +370,9 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const loginCard = document.getElementById('loginCard');
 const adminView = document.getElementById('adminView');
 const bilanList = document.getElementById('bilanList');
+const avisList = document.getElementById('avisList');
+const overlay = document.getElementById('overlay');
+const avisSheet = document.getElementById('avisSheet');
 
 function escapeHtml(str){
   const d = document.createElement('div');
@@ -296,7 +406,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 async function showAdmin(){
   loginCard.style.display = 'none';
   adminView.classList.add('show');
-  await Promise.all([loadBilans(), loadMaintenanceStatus()]);
+  await Promise.all([loadBilans(), loadMaintenanceStatus(), loadAvis()]);
 }
 
 /* ===================== Bilans ===================== */
@@ -337,6 +447,64 @@ function renderBilans(list){
     });
   });
 }
+
+/* ===================== Avis ===================== */
+async function loadAvis(){
+  avisList.innerHTML = '<p class="avis-empty">Chargement…</p>';
+  const { data, error } = await sb.from('avis').select('*').order('created_at', { ascending: true });
+  if(error){
+    avisList.innerHTML = '<p class="avis-empty">Erreur de chargement.</p>';
+    console.error(error);
+    return;
+  }
+  renderAvis(data);
+}
+
+function renderAvis(list){
+  if(!list || list.length === 0){
+    avisList.innerHTML = '<p class="avis-empty">Aucun avis pour le moment.</p>';
+    return;
+  }
+  avisList.innerHTML = list.map((a, i) => `
+    <div class="avis-item" data-id="${a.id}">
+      <span class="trash" data-del="${a.id}" title="Supprimer">🗑</span>
+      Avis ${i + 1}
+    </div>
+  `).join('');
+
+  avisList.querySelectorAll('.trash').forEach(t => {
+    t.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if(!confirm('Supprimer définitivement cet avis ?')) return;
+      const { error } = await sb.from('avis').delete().eq('id', t.dataset.del);
+      if(error){
+        alert('Suppression impossible : ' + error.message);
+        return;
+      }
+      loadAvis();
+    });
+  });
+
+  avisList.querySelectorAll('.avis-item').forEach((item, i) => {
+    item.addEventListener('click', () => {
+      const a = list.find(x => x.id === item.dataset.id);
+      if(a) openAvisSheet(a, i + 1);
+    });
+  });
+}
+
+function openAvisSheet(a, num){
+  avisSheet.innerHTML = `
+    <span class="close-x" id="closeAvisSheet">✕</span>
+    <h3>Avis ${num}</h3>
+    <p>${escapeHtml(a.texte)}</p>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('closeAvisSheet').addEventListener('click', () => overlay.classList.remove('show'));
+}
+overlay.addEventListener('click', (e) => {
+  if(e.target === overlay) overlay.classList.remove('show');
+});
 
 /* ===================== Switch maintenance ===================== */
 const toggle = document.getElementById('maintenanceToggle');
