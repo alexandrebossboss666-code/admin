@@ -197,6 +197,7 @@
     font-weight:700;
     font-family:'Space Grotesk',sans-serif;
     color:var(--red-text);
+    cursor:pointer;
   }
   .bilan-item .trash{
     position:absolute;
@@ -315,6 +316,20 @@
     line-height:1.5;
     white-space:pre-wrap;
   }
+  .score-badge{
+    display:inline-block;
+    padding:8px 18px;
+    border-radius:12px;
+    font-weight:700;
+    font-family:'Space Grotesk',sans-serif;
+    color:#fff;
+    font-size:0.92rem;
+  }
+  .score-badge.nulle{ background:#adadaa; color:#3a3a37; }
+  .score-badge.mauvaise{ background:#e05252; }
+  .score-badge.mediocre{ background:#ef9d3c; }
+  .score-badge.bonne{ background:#8bc46a; color:#153c0c; }
+  .score-badge.extra{ background:#2f7d3c; }
 </style>
 </head>
 <body>
@@ -436,7 +451,8 @@ function renderBilans(list){
   `).join('');
 
   bilanList.querySelectorAll('.trash').forEach(t => {
-    t.addEventListener('click', async () => {
+    t.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const code = t.dataset.del;
       if(!confirm(`Supprimer définitivement le bilan ${code} ?`)) return;
       const { error } = await sb.from('bilans').delete().eq('code', code);
@@ -447,6 +463,74 @@ function renderBilans(list){
       loadBilans();
     });
   });
+
+  bilanList.querySelectorAll('.bilan-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const b = list.find(x => x.code === item.dataset.code);
+      if(b) openBilanSheet(b);
+    });
+  });
+}
+
+/* ===================== Badges de score (mêmes seuils que le site public) ===================== */
+function logoBadge(score){
+  if(score === 0) return {label:'Nulle', cls:'nulle'};
+  if(score === 1) return {label:'Mauvaise', cls:'mauvaise'};
+  if(score === 2) return {label:'Médiocre', cls:'mediocre'};
+  if(score === 3) return {label:'Bonne', cls:'bonne'};
+  return {label:'Extra', cls:'extra'};
+}
+function colorBadge(pct){
+  if(pct < 25) return {label:'Mauvaise', cls:'mauvaise'};
+  if(pct < 50) return {label:'Médiocre', cls:'mediocre'};
+  if(pct < 75) return {label:'Bonne', cls:'bonne'};
+  return {label:'Extra', cls:'extra'};
+}
+function formatDate(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function calcAge(iso){
+  if(!iso) return '';
+  const birth = new Date(iso);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const mDiff = now.getMonth() - birth.getMonth();
+  if(mDiff < 0 || (mDiff === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function openBilanSheet(b){
+  const lb = logoBadge(b.logo_score);
+  const cb = colorBadge(b.color_score);
+  const nb = typeof b.note_score === 'number' ? logoBadge(b.note_score) : null;
+  avisSheet.innerHTML = `
+    <span class="close-x" id="closeAvisSheet">✕</span>
+    <h3>Bilan de ${escapeHtml(b.prenom)}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:0.88rem;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e2df;">
+      <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Nom</span>${escapeHtml(b.nom)}</div>
+      <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Prénom</span>${escapeHtml(b.prenom)}</div>
+      <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Date de naissance</span>${formatDate(b.date_naissance)}${b.date_naissance ? ' (' + calcAge(b.date_naissance) + ' ans)' : ''}</div>
+      <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Genre</span>${escapeHtml(b.genre)}</div>
+      <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Code bilan</span>${escapeHtml(b.code)}</div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <h4 style="font-size:0.9rem;margin:0 0 8px;">Connaissance en logos</h4>
+      <span class="score-badge ${lb.cls}">${lb.label}</span>
+    </div>
+    <div style="margin-bottom:16px;">
+      <h4 style="font-size:0.9rem;margin:0 0 8px;">Perception des couleurs</h4>
+      <span class="score-badge ${cb.cls}">${cb.label}</span>
+    </div>
+    ${nb ? `
+    <div>
+      <h4 style="font-size:0.9rem;margin:0 0 8px;">Capacité à reconnaître les notes</h4>
+      <span class="score-badge ${nb.cls}">${nb.label}</span>
+    </div>` : ''}
+  `;
+  overlay.classList.add('show');
+  document.getElementById('closeAvisSheet').addEventListener('click', () => overlay.classList.remove('show'));
 }
 
 /* ===================== Avis ===================== */
@@ -539,4 +623,5 @@ toggle.addEventListener('change', async () => {
 </script>
 </body>
 </html>
+
 
