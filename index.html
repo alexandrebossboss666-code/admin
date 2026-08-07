@@ -272,7 +272,7 @@
     position:relative;
     background:var(--purple);
     border-radius:12px;
-    padding:14px 10px 10px;
+    padding:14px 10px 22px;
     text-align:center;
     font-weight:700;
     font-family:'Space Grotesk',sans-serif;
@@ -285,6 +285,18 @@
     cursor:pointer;
     font-size:0.9rem;
     line-height:1;
+  }
+  .avis-item .new-tag{
+    position:absolute;
+    bottom:6px; right:8px;
+    background:#5c2b8a;
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:0.62rem;
+    letter-spacing:0.03em;
+    padding:2px 8px;
+    border-radius:8px;
   }
 
   /* ---------- Overlay lecture d'un avis ---------- */
@@ -564,6 +576,7 @@ function renderAvis(list){
     <div class="avis-item" data-id="${a.id}">
       <span class="trash" data-del="${a.id}" title="Supprimer">🗑</span>
       Avis ${i + 1}
+      ${!a.lu ? '<span class="new-tag">Nouveau</span>' : ''}
     </div>
   `).join('');
 
@@ -588,7 +601,7 @@ function renderAvis(list){
   });
 }
 
-function openAvisSheet(a, num){
+async function openAvisSheet(a, num){
   avisSheet.innerHTML = `
     <span class="close-x" id="closeAvisSheet">✕</span>
     <h3>Avis ${num}</h3>
@@ -596,6 +609,14 @@ function openAvisSheet(a, num){
   `;
   overlay.classList.add('show');
   document.getElementById('closeAvisSheet').addEventListener('click', () => overlay.classList.remove('show'));
+
+  if(!a.lu){
+    const { error } = await sb.from('avis').update({ lu: true }).eq('id', a.id);
+    if(!error){
+      a.lu = true;
+      loadAvis();
+    }
+  }
 }
 overlay.addEventListener('click', (e) => {
   if(e.target === overlay) overlay.classList.remove('show');
@@ -633,6 +654,7 @@ toggle.addEventListener('change', async () => {
 </script>
 </body>
 </html>
+
 
 
 
