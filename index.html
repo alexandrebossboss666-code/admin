@@ -477,10 +477,18 @@ function renderBilans(list){
       e.stopPropagation();
       const code = t.dataset.del;
       if(!confirm(`Supprimer définitivement le bilan ${code} ?`)) return;
+      const b = list.find(x => x.code === code);
       const { error } = await sb.from('bilans').delete().eq('code', code);
       if(error){
         alert('Suppression impossible : ' + error.message);
         return;
+      }
+      if(b && b.photo_url){
+        const path = b.photo_url.split('/photos/').pop();
+        if(path){
+          const { error: photoError } = await sb.storage.from('photos').remove([path]);
+          if(photoError) console.error(photoError);
+        }
       }
       loadBilans();
     });
@@ -535,7 +543,10 @@ function openBilanSheet(b){
       <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Prénom</span>${escapeHtml(b.prenom)}</div>
       <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Date de naissance</span>${formatDate(b.date_naissance)}${b.date_naissance ? ' (' + calcAge(b.date_naissance) + ' ans)' : ''}</div>
       <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Genre</span>${escapeHtml(b.genre)}</div>
-      <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Code bilan</span>${escapeHtml(b.code)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Code bilan</span>${escapeHtml(b.code)}</span>
+        ${b.photo_url ? `<img src="${b.photo_url}" alt="Photo" style="width:44px;height:44px;border-radius:10px;object-fit:cover;border:1.5px solid #ccc;">` : ''}
+      </div>
     </div>
     <div style="margin-bottom:16px;">
       <h4 style="font-size:0.9rem;margin:0 0 8px;">Connaissance en logos</h4>
@@ -654,6 +665,7 @@ toggle.addEventListener('change', async () => {
 </script>
 </body>
 </html>
+
 
 
 
