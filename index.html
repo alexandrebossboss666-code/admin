@@ -535,8 +535,10 @@ function openBilanSheet(b){
   const lb = logoBadge(b.logo_score);
   const cb = colorBadge(b.color_score);
   const nb = typeof b.note_score === 'number' ? logoBadge(b.note_score) : null;
+  const mode = b.mode === 'expert' ? 'expert' : 'normal';
   avisSheet.innerHTML = `
     <span class="close-x" id="closeAvisSheet">✕</span>
+    <span style="position:absolute;top:14px;left:16px;padding:5px 12px;border-radius:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.7rem;color:#fff;background:${mode === 'expert' ? '#c0342c' : '#2f5fa3'};">${mode === 'expert' ? 'Mode expert' : 'Mode normal'}</span>
     <h3>Bilan de ${escapeHtml(b.prenom)}</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:0.88rem;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e2df;">
       <div><span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:#8a8a85;">Nom</span>${escapeHtml(b.nom)}</div>
@@ -663,6 +665,7 @@ toggle.addEventListener('change', async () => {
 </script>
 </body>
 </html>
+
 
 
 
