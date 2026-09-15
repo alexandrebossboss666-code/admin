@@ -237,6 +237,86 @@
     gap:20px;
     align-items:center;
   }
+
+  /* ---------- Statistiques ---------- */
+  .stats-row{
+    display:flex;
+    gap:12px;
+    width:260px;
+  }
+  .stat-card{
+    flex:1;
+    border-radius:14px;
+    padding:12px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Space Grotesk',sans-serif;
+    box-sizing:border-box;
+  }
+  .stat-card .stat-letter{
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:1rem;
+    color:#fff;
+    flex-shrink:0;
+  }
+  .stat-card .stat-info{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .stat-card .stat-count{
+    font-size:1.25rem;
+    font-weight:800;
+    line-height:1.1;
+  }
+  .stat-card .stat-label{
+    font-size:0.65rem;
+    font-weight:600;
+    line-height:1.25;
+    opacity:0.9;
+  }
+  .stat-card.normal{
+    background:#dce8f5;
+    border:2px solid #2f5fa3;
+    color:#1c3a5c;
+  }
+  .stat-card.normal .stat-letter{ background:#2f5fa3; }
+  .stat-card.expert{
+    background:#f8dcdc;
+    border:2px solid #c0342c;
+    color:#5c1414;
+  }
+  .stat-card.expert .stat-letter{ background:#c0342c; }
+
+  .stat-card.inprogress{
+    width:260px;
+    background:#ffffff;
+    border:2px solid #1c1c18;
+    color:#26261f;
+  }
+  .stat-card.inprogress .live-dot{
+    width:13px;
+    height:13px;
+    border-radius:50%;
+    background:#3f7a2b;
+    box-shadow:0 0 0 0 rgba(63,122,43,0.5);
+    animation:live-pulse 1.6s infinite;
+    flex-shrink:0;
+    margin:0 10px 0 8px;
+  }
+  @keyframes live-pulse{
+    0%{ box-shadow:0 0 0 0 rgba(63,122,43,0.5); }
+    70%{ box-shadow:0 0 0 9px rgba(63,122,43,0); }
+    100%{ box-shadow:0 0 0 0 rgba(63,122,43,0); }
+  }
+
   .avis-panel{
     border:2px solid #1c1c18;
     border-radius:20px;
@@ -384,6 +464,31 @@
     </div>
 
     <div class="panels-column">
+      <div class="stats-row">
+        <div class="stat-card normal">
+          <div class="stat-letter">N</div>
+          <div class="stat-info">
+            <span class="stat-count" id="statNormalCount">0</span>
+            <span class="stat-label">Tests en mode normal</span>
+          </div>
+        </div>
+        <div class="stat-card expert">
+          <div class="stat-letter">E</div>
+          <div class="stat-info">
+            <span class="stat-count" id="statExpertCount">0</span>
+            <span class="stat-label">Tests en mode expert</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card inprogress">
+        <span class="live-dot"></span>
+        <div class="stat-info">
+          <span class="stat-count" id="statInProgressCount">0</span>
+          <span class="stat-label">En train de faire un test</span>
+        </div>
+      </div>
+
       <aside class="bilan-panel">
         <h2>Bilan</h2>
         <div class="bilan-list" id="bilanList"></div>
@@ -444,7 +549,9 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 async function showAdmin(){
   loginCard.style.display = 'none';
   adminView.classList.add('show');
-  await Promise.all([loadBilans(), loadMaintenanceStatus(), loadAvis()]);
+  await Promise.all([loadBilans(), loadMaintenanceStatus(), loadAvis(), loadInProgressCount()]);
+  subscribeInProgressRealtime();
+  setInterval(loadInProgressCount, 15000);
 }
 
 /* ===================== Bilans ===================== */
@@ -457,6 +564,14 @@ async function loadBilans(){
     return;
   }
   renderBilans(data);
+  updateModeStats(data);
+}
+
+function updateModeStats(list){
+  const normalCount = (list || []).filter(b => b.mode !== 'expert').length;
+  const expertCount = (list || []).filter(b => b.mode === 'expert').length;
+  document.getElementById('statNormalCount').textContent = normalCount;
+  document.getElementById('statExpertCount').textContent = expertCount;
 }
 
 function renderBilans(list){
@@ -655,6 +770,27 @@ toggle.addEventListener('change', async () => {
   }
 });
 
+/* ===================== Personnes en train de faire un test ===================== */
+const ACTIVE_SESSION_WINDOW_MS = 40 * 1000;
+
+async function loadInProgressCount(){
+  const cutoff = new Date(Date.now() - ACTIVE_SESSION_WINDOW_MS).toISOString();
+  const { count, error } = await sb.from('active_sessions').select('*', { count: 'exact', head: true }).gte('last_seen', cutoff);
+  if(error){
+    console.error(error);
+    return;
+  }
+  document.getElementById('statInProgressCount').textContent = count || 0;
+}
+
+function subscribeInProgressRealtime(){
+  sb.channel('active-sessions-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'active_sessions' }, () => {
+      loadInProgressCount();
+    })
+    .subscribe();
+}
+
 /* ===================== Init : session déjà active ? ===================== */
 (async () => {
   const { data } = await sb.auth.getSession();
@@ -665,9 +801,6 @@ toggle.addEventListener('change', async () => {
 </script>
 </body>
 </html>
-
-
-
 
 
 
