@@ -771,7 +771,7 @@ toggle.addEventListener('change', async () => {
 });
 
 /* ===================== Personnes en train de faire un test ===================== */
-const ACTIVE_SESSION_WINDOW_MS = 40 * 1000;
+const ACTIVE_SESSION_WINDOW_MS = 90 * 1000;
 
 async function loadInProgressCount(){
   const cutoff = new Date(Date.now() - ACTIVE_SESSION_WINDOW_MS).toISOString();
@@ -801,7 +801,3 @@ function subscribeInProgressRealtime(){
 </script>
 </body>
 </html>
-
-
-
-
