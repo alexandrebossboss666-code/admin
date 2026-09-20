@@ -295,28 +295,6 @@
   }
   .stat-card.expert .stat-letter{ background:#c0342c; }
 
-  .stat-card.inprogress{
-    width:260px;
-    background:#ffffff;
-    border:2px solid #1c1c18;
-    color:#26261f;
-  }
-  .stat-card.inprogress .live-dot{
-    width:13px;
-    height:13px;
-    border-radius:50%;
-    background:#3f7a2b;
-    box-shadow:0 0 0 0 rgba(63,122,43,0.5);
-    animation:live-pulse 1.6s infinite;
-    flex-shrink:0;
-    margin:0 10px 0 8px;
-  }
-  @keyframes live-pulse{
-    0%{ box-shadow:0 0 0 0 rgba(63,122,43,0.5); }
-    70%{ box-shadow:0 0 0 9px rgba(63,122,43,0); }
-    100%{ box-shadow:0 0 0 0 rgba(63,122,43,0); }
-  }
-
   .avis-panel{
     border:2px solid #1c1c18;
     border-radius:20px;
@@ -481,14 +459,6 @@
         </div>
       </div>
 
-      <div class="stat-card inprogress">
-        <span class="live-dot"></span>
-        <div class="stat-info">
-          <span class="stat-count" id="statInProgressCount">0</span>
-          <span class="stat-label">En train de faire un test</span>
-        </div>
-      </div>
-
       <aside class="bilan-panel">
         <h2>Bilan</h2>
         <div class="bilan-list" id="bilanList"></div>
@@ -549,9 +519,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 async function showAdmin(){
   loginCard.style.display = 'none';
   adminView.classList.add('show');
-  await Promise.all([loadBilans(), loadMaintenanceStatus(), loadAvis(), loadInProgressCount()]);
-  subscribeInProgressRealtime();
-  setInterval(loadInProgressCount, 15000);
+  await Promise.all([loadBilans(), loadMaintenanceStatus(), loadAvis()]);
 }
 
 /* ===================== Bilans ===================== */
@@ -769,27 +737,6 @@ toggle.addEventListener('change', async () => {
     statusLabel.textContent = !checked ? 'Activé' : 'Désactivé';
   }
 });
-
-/* ===================== Personnes en train de faire un test ===================== */
-const ACTIVE_SESSION_WINDOW_MS = 90 * 1000;
-
-async function loadInProgressCount(){
-  const cutoff = new Date(Date.now() - ACTIVE_SESSION_WINDOW_MS).toISOString();
-  const { count, error } = await sb.from('active_sessions').select('*', { count: 'exact', head: true }).gte('last_seen', cutoff);
-  if(error){
-    console.error(error);
-    return;
-  }
-  document.getElementById('statInProgressCount').textContent = count || 0;
-}
-
-function subscribeInProgressRealtime(){
-  sb.channel('active-sessions-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'active_sessions' }, () => {
-      loadInProgressCount();
-    })
-    .subscribe();
-}
 
 /* ===================== Init : session déjà active ? ===================== */
 (async () => {
