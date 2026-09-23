@@ -32,6 +32,10 @@
     justify-content:center;
     position:relative;
   }
+  body.admin-mode{
+    align-items:flex-start;
+    padding:96px 32px 40px;
+  }
   h1,h2{ font-family:'Space Grotesk',sans-serif; }
 
   /* ---------- Connexion ---------- */
@@ -82,7 +86,7 @@
 
   /* ---------- Espace admin ---------- */
   .admin-view{ display:none; }
-  .admin-view.show{ display:block; }
+  .admin-view.show{ display:block; width:100%; }
 
   .topbar{
     position:fixed;
@@ -105,29 +109,30 @@
   }
   #logoutBtn:hover{ background:#f2f2ef; }
 
-  .switch-box{
-    position:fixed;
-    top:50%;
-    right:36px;
-    transform:translateY(-50%);
+  .maintenance-card{
     border:2px solid #1c1c18;
-    border-radius:20px;
+    border-radius:14px;
     background:#fff;
-    padding:16px 14px;
-    width:150px;
+    padding:14px 14px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
     text-align:center;
+    flex:1;
+    min-width:170px;
   }
-  .switch-box .label{
+  .maintenance-card .label{
     font-size:0.78rem;
     font-weight:700;
     font-family:'Space Grotesk',sans-serif;
-    margin-bottom:12px;
+    margin-bottom:10px;
     line-height:1.3;
   }
   .switch{
     position:relative;
-    width:58px;
-    height:32px;
+    width:52px;
+    height:29px;
     margin:0 auto;
     display:block;
   }
@@ -152,16 +157,16 @@
     content:'';
     position:absolute;
     top:3px; left:3px;
-    width:26px; height:26px;
+    width:23px; height:23px;
     background:#fff;
     border-radius:50%;
     transition:transform .25s cubic-bezier(.4,0,.2,1);
     box-shadow:0 3px 6px rgba(0,0,0,0.28);
   }
   .switch input:checked + .track{ background:#c0342c; }
-  .switch input:checked + .track::before{ transform:translateX(26px); }
+  .switch input:checked + .track::before{ transform:translateX(23px); }
   .switch-status{
-    margin-top:10px;
+    margin-top:9px;
     font-size:0.72rem;
     color:#6b6b67;
     font-weight:600;
@@ -171,8 +176,9 @@
     border:2px solid #1c1c18;
     border-radius:20px;
     background:#ffffff;
-    width:260px;
-    max-height:70vh;
+    flex:1.3;
+    min-width:300px;
+    max-height:64vh;
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -187,16 +193,18 @@
   .bilan-list{
     flex:1;
     overflow-y:auto;
-    padding:14px 12px;
-    display:flex;
-    flex-direction:column;
+    padding:14px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));
     gap:10px;
+    align-content:start;
   }
   .bilan-empty{
     font-size:0.8rem;
     color:#8a8a85;
     text-align:center;
     margin-top:20px;
+    grid-column:1 / -1;
   }
   .bilan-item{
     position:relative;
@@ -227,27 +235,32 @@
   }
 
   @media (max-width:760px){
-    .switch-box{ position:static; transform:none; margin:20px auto 0; }
-    body{ flex-direction:column; padding:80px 0 40px; }
+    body.admin-mode{ padding:80px 16px 40px; }
+    .stats-row, .panels-row{ flex-direction:column; }
+    .bilan-panel, .avis-panel, .maintenance-card{ min-width:0; width:100%; }
   }
 
-  .panels-column{
+  .dashboard{
     display:flex;
     flex-direction:column;
-    gap:20px;
-    align-items:center;
+    gap:22px;
+    width:100%;
+    max-width:1000px;
+    margin:0 auto;
   }
 
   /* ---------- Statistiques ---------- */
   .stats-row{
     display:flex;
-    gap:12px;
-    width:260px;
+    gap:16px;
+    width:100%;
+    flex-wrap:wrap;
   }
   .stat-card{
     flex:1;
+    min-width:170px;
     border-radius:14px;
-    padding:12px 12px;
+    padding:12px 14px;
     display:flex;
     align-items:center;
     gap:10px;
@@ -295,12 +308,21 @@
   }
   .stat-card.expert .stat-letter{ background:#c0342c; }
 
+  .panels-row{
+    display:flex;
+    gap:20px;
+    width:100%;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
   .avis-panel{
     border:2px solid #1c1c18;
     border-radius:20px;
     background:#ffffff;
-    width:260px;
-    max-height:40vh;
+    flex:1;
+    min-width:260px;
+    max-height:64vh;
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -315,10 +337,11 @@
   .avis-list{
     flex:1;
     overflow-y:auto;
-    padding:14px 12px;
-    display:flex;
-    flex-direction:column;
+    padding:14px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
     gap:10px;
+    align-content:start;
   }
   .avis-empty{
     font-size:0.8rem;
@@ -432,16 +455,7 @@
     <div class="topbar">Espace admin</div>
     <button id="logoutBtn">Déconnexion</button>
 
-    <div class="switch-box">
-      <div class="label">Mode maintenance</div>
-      <label class="switch">
-        <input type="checkbox" id="maintenanceToggle">
-        <span class="track"></span>
-      </label>
-      <div class="switch-status" id="switchStatus">Désactivé</div>
-    </div>
-
-    <div class="panels-column">
+    <div class="dashboard">
       <div class="stats-row">
         <div class="stat-card normal">
           <div class="stat-letter">N</div>
@@ -457,17 +471,27 @@
             <span class="stat-label">Tests en mode expert</span>
           </div>
         </div>
+        <div class="maintenance-card">
+          <div class="label">Mode maintenance</div>
+          <label class="switch">
+            <input type="checkbox" id="maintenanceToggle">
+            <span class="track"></span>
+          </label>
+          <div class="switch-status" id="switchStatus">Désactivé</div>
+        </div>
       </div>
 
-      <aside class="bilan-panel">
-        <h2>Bilan</h2>
-        <div class="bilan-list" id="bilanList"></div>
-      </aside>
+      <div class="panels-row">
+        <aside class="bilan-panel">
+          <h2>Bilan</h2>
+          <div class="bilan-list" id="bilanList"></div>
+        </aside>
 
-      <aside class="avis-panel">
-        <h2>Avis</h2>
-        <div class="avis-list" id="avisList"></div>
-      </aside>
+        <aside class="avis-panel">
+          <h2>Avis</h2>
+          <div class="avis-list" id="avisList"></div>
+        </aside>
+      </div>
     </div>
   </div>
 
@@ -519,6 +543,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 async function showAdmin(){
   loginCard.style.display = 'none';
   adminView.classList.add('show');
+  document.body.classList.add('admin-mode');
   await Promise.all([loadBilans(), loadMaintenanceStatus(), loadAvis()]);
 }
 
