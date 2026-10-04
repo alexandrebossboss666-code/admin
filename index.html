@@ -121,7 +121,7 @@
     justify-content:center;
     text-align:center;
     flex:1;
-    min-width:170px;
+    min-width:260px;
   }
   .maintenance-card .label{
     font-size:0.78rem;
@@ -238,6 +238,7 @@
   @media (max-width:760px){
     body.admin-mode{ padding:80px 16px 40px; }
     .stats-row, .panels-row{ flex-direction:column; }
+    .stats-left-group{ min-width:0; width:100%; }
     .bilan-panel, .avis-panel, .maintenance-card{ min-width:0; width:100%; }
   }
 
@@ -253,13 +254,20 @@
   /* ---------- Statistiques ---------- */
   .stats-row{
     display:flex;
-    gap:16px;
+    gap:20px;
     width:100%;
+    align-items:stretch;
     flex-wrap:wrap;
+  }
+  .stats-left-group{
+    display:flex;
+    gap:16px;
+    flex:1.3;
+    min-width:300px;
   }
   .stat-card{
     flex:1;
-    min-width:170px;
+    min-width:0;
     border-radius:14px;
     padding:12px 14px;
     display:flex;
@@ -458,18 +466,20 @@
 
     <div class="dashboard">
       <div class="stats-row">
-        <div class="stat-card normal">
-          <div class="stat-letter">N</div>
-          <div class="stat-info">
-            <span class="stat-count" id="statNormalCount">0</span>
-            <span class="stat-label">Tests en mode normal</span>
+        <div class="stats-left-group">
+          <div class="stat-card normal">
+            <div class="stat-letter">N</div>
+            <div class="stat-info">
+              <span class="stat-count" id="statNormalCount">0</span>
+              <span class="stat-label">Tests en mode normal</span>
+            </div>
           </div>
-        </div>
-        <div class="stat-card expert">
-          <div class="stat-letter">E</div>
-          <div class="stat-info">
-            <span class="stat-count" id="statExpertCount">0</span>
-            <span class="stat-label">Tests en mode expert</span>
+          <div class="stat-card expert">
+            <div class="stat-letter">E</div>
+            <div class="stat-info">
+              <span class="stat-count" id="statExpertCount">0</span>
+              <span class="stat-label">Tests en mode expert</span>
+            </div>
           </div>
         </div>
         <div class="maintenance-card">
@@ -774,4 +784,3 @@ toggle.addEventListener('change', async () => {
 </script>
 </body>
 </html>
-
